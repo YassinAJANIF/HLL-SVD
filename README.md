@@ -18,7 +18,7 @@ Our library provides a comprehensive set of methods for computing the Singular V
 
 1. **Streaming SVD**: Our library provides the first implementation of the Levy and Lindenbaum([(Levy and Lindenbaum 1998)](#Levy-and-Lindenbaum-1998) approach on hybrid GPU-CPU architectures, using mpi4py to enable inter-process communication in an HPC environment, and CuPy to perform algebraic operations (QR decomposition, SVD, matrix products, etc.) on GPUs;
 
-2. **Direct Parallel SVD**: Our library provides a variety of direct methods for computing the SVD in parallel, including the approximate snapshot method [ref], SVD via EVD, and SVD via the TSQR method [(Wang et al 2016)](#Wang-et-al-2016). These methods use mpi4py to enable communication between processes running on different cores.
+2. **Direct Parallel SVD**: Our library provides a variety of direct methods for computing the SVD in parallel, including the approximate snapshot method [(Wang et al 2016)](#Wang-et-al-2016), SVD via EVD, and SVD via the TSQR method [(Wang et al 2016)](#Wang-et-al-2016). These methods use mpi4py to enable communication between processes running on different cores.
 
 
 3. **Serail SVD** The library also provides classical implementations of SVD in serial, including SVD via QR decomposition, SVD via EVD, and randomized SVD.
@@ -44,14 +44,19 @@ To generate the data, there are two directories:
 $ python3 main_serial.py
 ```
   
-- For the parallel version, run the following commande:
-```bash
+- For the parallel version, if you are working in interactive mode, you can run the following command — for example, with 2 GPUs.
+```bash 
 $ export OPENBLAS_NUM_THREADS=1
 ```
 ```bash
 $ mpirun -np 2 python3 main_parallel.py
 ```
-2 is the number of GPUs
+Otherwise, you can run the code using the Slurm script job_gpus.sh: 
+
+```bash
+$ SBATCH  job_gpus.sh
+```
+
 
 ## References
 
