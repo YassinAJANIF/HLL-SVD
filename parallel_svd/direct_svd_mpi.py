@@ -11,9 +11,9 @@ from base_parallel import ParSVD_Base
 class Dsvd(ParSVD_Base):
     def __init__(self, K, ff, low_rank=False, results_dir='results'):
         super().__init__(K, ff, low_rank, results_dir)
-  #      self.comm = MPI.COMM_WORLD
- #       self.rank = self.comm.Get_rank()
-#        self.nprocs = self.comm.Get_size()
+  
+
+  
 
     def tsqr1(self, A):
         """
@@ -66,10 +66,13 @@ class Dsvd(ParSVD_Base):
 
     def tsqr1_svd(self, A):
         """
-        Effectue la SVD via TSQR sur la matrice A locale.
+        Computing the SVD using the tsqr1 algorithm
         """
         Ui, S, V = self.tsqr1(A)
         return Ui, S, V
+
+
+
 
 
     def tsqr1_randomized(self, A, n_iter):
@@ -151,7 +154,7 @@ class Dsvd(ParSVD_Base):
 
     def APMOS(self, A):
         """
-        SVD parallele par projection via APMOS.
+        SVD by APMOS.
         """
         vlocal, slocal = generate_right_vectors(A, self._K)
         wlocal = np.matmul(vlocal, np.diag(slocal).T)
@@ -180,7 +183,7 @@ class Dsvd(ParSVD_Base):
 
     def EVD(self, A):
         """
-        This method allows the computation of the SVD using the snapshot approach 
+        SVD using the snapshot approach 
         """
         A = A.astype(np.float64)
         local_rows, n = A.shape
