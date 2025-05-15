@@ -14,7 +14,7 @@
 
 
 # Description
-Our library provides a comprehensive set of methods for computing the Singular Value Decomposition (SVD), available in both sequential and parallel versions. Designed in a modular and well-structured manner, it ensures simple, flexible, and easily portable usage across various computing environments, including distributed architectures and GPU-accelerated systems. The library is organized as follows:
+Our library provides a comprehensive set of methods for computing the Singular Value Decomposition (SVD), available in both sequential and parallel versions. Designed in a modular and well-structured manner, it ensures simple, flexible, and easily portable usage across various computing environments, including distributed architectures and GPU-accelerated systems. The library allows:
 
 1. **Streaming SVD**: Our library provides the first implementation of the Levy and Lindenbaum([(Levy and Lindenbaum 1998)](#Levy-and-Lindenbaum-1998) approach on hybrid GPU-CPU architectures, using mpi4py to enable inter-process communication in an HPC environment, and CuPy to perform algebraic operations (QR decomposition, SVD, matrix products, etc.) on GPUs;
 
@@ -38,16 +38,12 @@ To generate the data, there are two directories:
 - **Data_parallel**: This repository contains the file **create_data.py**, which allows you to generate data for parallel tests, such as MPI (on CPU nodes) or CuPy (hybrid CPU/GPU nodes). To use it, simply specify the size of the matrix, the number of batches (num_batches), and the number of ranks (num_ranks), then execute the script.
 - **Data_serial**: This repository includes the file **create_data.py**, which facilitates the generation of random data. You need to specify the number of columns and rows for the matrix. Once the matrix is created, you can also define the number of batches(num_batches) into which the matrix should be divided.
 # Testing
-- For the serial version: execute the python script main_serial.py.
 
-```bash
-$ python3 main_serial.py
-```
-  
 - For the parallel version, if you are working in interactive mode, you can run the following command — for example, with 2 GPUs.
 ```bash 
 $ export OPENBLAS_NUM_THREADS=1
 ```
+
 ```bash
 $ mpirun -np 2 python3 main_parallel_gpu.py
 ```
