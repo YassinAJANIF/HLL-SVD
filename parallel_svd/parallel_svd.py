@@ -1,10 +1,10 @@
 import numpy as np
 from mpi4py import MPI
-
+import os, sys
 # from utils import low_rank_svd, generate_right_vectors  # Assurez-vous d'importer ces fonctions
 
-
-from Base_parallel import ParSVD_Base
+CWD = os.getcwd()
+from base_parallel import ParSVD_Base
 
 
 
@@ -62,16 +62,96 @@ class Dsvd(ParSVD_Base):
         Ui = np.matmul(qlocal, unew)
         return Ui, snew, vt
 
-    def tsqr2_svd(self, A):
+ 
+
+    def tsqr1_svd(self, A):
         """
         Effectue la SVD via TSQR sur la matrice A locale.
         """
         Ui, S, V = self.tsqr1(A)
         return Ui, S, V
 
+
+    def tsqr1_randomized(self, A, n_iter):
+        """
+        Perform parallel randomized  QR decomposition.
+
+        :param ndarray A: data matrix
+        :return: qlocal (local Q matrix), unew (updated U matrix), snew (singular values)
+        """
+        # Perform local QR
+        num_rows, num_cols = A.shape        
+        np.random.seed(42)      
+        omega = np.random.normal(size=(num_cols,self._K))
+      
+        Y = np.matmul(A, omega)
+        for _ in range(n_iter):
+            Y = np.matmul(A, np.matmul(A.T, Y))  # Itérations pour renforcer l'orthogonalisation
+
+        t4=MPI.Wtime()
+        q, r = np.linalg.qr(Y)
+        t5=MPI.Wtime()
+        rlocal_shape_0 = r.shape[0]
+        # Gather data at rank 0:
+        r_global = self.comm.gather(r, root=0)
+        # Perform QR at rank 0:
+        if self.rank == 0:
+            temp = r_global[0]
+            for i in range(self.nprocs-1):
+                temp = np.concatenate((temp, r_global[i+1]), axis=0)
+            r_global = temp
+
+            qglobal, rfinal = np.linalg.qr(r_global)
+            qglobal = -qglobal  # Trick for consistency
+            rfinal = -rfinal
+
+            # For this rank
+            qlocal = np.matmul(q, qglobal[:rlocal_shape_0])
+
+            # Send to other ranks
+            for rank in range(1, self.nprocs):
+                self.comm.send(qglobal[rank*rlocal_shape_0: (rank+1)*rlocal_shape_0], dest=rank, tag=rank+10)
+
+            # Perform SVD on rfinal
+            if self._low_rank:
+                unew, snew, vt = self.low_rank_svd(rfinal, self._K)  # Use self.low_rank_svd
+            else:
+                unew, snew, vt = np.linalg.svd(rfinal)  # Discard the third value (Vh)
+                unew=unew[:,:self._K]
+                snew=snew[:self._K]
+        else:
+            # Receive qglobal slices from rank 0
+            qglobal = self.comm.recv(source=0, tag=self.rank+10)
+
+            # For this rank
+            qlocal = np.matmul(q, qglobal)
+
+            # To receive new singular vectors
+            unew = None
+            snew = None
+            vt = None
+
+        unew = self.comm.bcast(unew, root=0)
+        snew = self.comm.bcast(snew, root=0)
+        vt = self.comm.bcast(vt, root=0)
+
+        Ui = np.matmul(qlocal, unew)
+        return Ui, snew, vt
+
+
+    def tsqr1_svd_randomized(self, A, n_iter):
+        """
+        Effectue la SVD via TSQR sur la matrice A locale.
+        """
+        Ui, S, V = self.tsqr1_randomized(A,n_iter)
+        return Ui, S, V
+
+
+
+
     def APMOS(self, A):
         """
-        SVD parallele par projection via APMOS (methode alternative).
+        SVD parallele par projection via APMOS.
         """
         vlocal, slocal = generate_right_vectors(A, self._K)
         wlocal = np.matmul(vlocal, np.diag(slocal).T)
@@ -95,8 +175,13 @@ class Dsvd(ParSVD_Base):
 
         return temp, s[:self._K]
 
+
+
+
     def EVD(self, A):
-    
+        """
+        This method allows the computation of the SVD using the snapshot approach 
+        """
         A = A.astype(np.float64)
         local_rows, n = A.shape
         local_ATA = np.dot(A.T, A).astype(np.float64)
