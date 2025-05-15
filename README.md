@@ -13,15 +13,15 @@
 
 
 
-#Description
-Our library provides a comprehensive set of methods for computing the Singular Value Decomposition (SVD), available in both sequential and parallel versions. Designed in a modular and well-structured manner, it ensures simple, flexible, and easily portable usage across various computing environments, including distributed architectures and GPU-accelerated systems. The library is organized as follows
+# Description
+Our library provides a comprehensive set of methods for computing the Singular Value Decomposition (SVD), available in both sequential and parallel versions. Designed in a modular and well-structured manner, it ensures simple, flexible, and easily portable usage across various computing environments, including distributed architectures and GPU-accelerated systems. The library is organized as follows:
 
-1. ** Streaming SVD**: Our library provides the first implementation of the Levy and Lindenbaum([(Levy and Lindenbaum 1998)](#Levy-and-Lindenbaum-1998) approach on hybrid GPU-CPU architectures, using mpi4py to enable inter-process communication in an HPC environment, and CuPy to perform algebraic operations (QR decomposition, SVD, matrix products, etc.) on GPUs..
+1. **Streaming SVD**: Our library provides the first implementation of the Levy and Lindenbaum([(Levy and Lindenbaum 1998)](#Levy-and-Lindenbaum-1998) approach on hybrid GPU-CPU architectures, using mpi4py to enable inter-process communication in an HPC environment, and CuPy to perform algebraic operations (QR decomposition, SVD, matrix products, etc.) on GPUs;
 
-2. **Direct Parallel SVD **: Our library provides a variety of direct methods for computing the SVD in parallel, including the approximate snapshot method [ref], SVD via EVD, and SVD via the TSQR method [(Wang et al 2016)](#Wang-et-al-2016). These methods use mpi4py to enable communication between processes running on different cores.
+2. **Direct Parallel SVD**: Our library provides a variety of direct methods for computing the SVD in parallel, including the approximate snapshot method [ref], SVD via EVD, and SVD via the TSQR method [(Wang et al 2016)](#Wang-et-al-2016). These methods use mpi4py to enable communication between processes running on different cores.
 
 
-3. ** Serail SVD** The library also provides classical implementations of SVD in serial, including SVD via QR decomposition, SVD via EVD, and randomized SVD.
+3. **Serail SVD** The library also provides classical implementations of SVD in serial, including SVD via QR decomposition, SVD via EVD, and randomized SVD.
 
 # Installation
 Use the following command to install the library locally<br>
