@@ -1,0 +1,22 @@
+# Fichiers Python compilés
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Dossiers d’environnement virtuel
+env/
+venv/
+
+# Données temporaires ou locales
+*.npy
+*.h5
+*.dat
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
