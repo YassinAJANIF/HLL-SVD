@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'Paralle
 
 
 #from Parallel_svd.base_parallel import ParSVD_Base
-from Parallel_svd.stream_svd_gpus import ParSVD_Parallel
+from parallel_svd.stream_svd_gpus import ParSVD_Parallel
 
 
 
