@@ -49,7 +49,7 @@ $ python3 main_serial.py
 $ export OPENBLAS_NUM_THREADS=1
 ```
 ```bash
-$ mpirun -np 2 python3 main_parallel.py
+$ mpirun -np 2 python3 main_parallel_gpu.py
 ```
 Otherwise, you can run the code using the Slurm script job_gpus.sh: 
 
