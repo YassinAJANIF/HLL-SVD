@@ -1,7 +1,7 @@
 # PyParSVD: Python Parallel Singular Value Decomposition
 
 ## Table of contents
-## Table of contents
+
 
   * [Description](#description)
   * [Installation](#Installation)
