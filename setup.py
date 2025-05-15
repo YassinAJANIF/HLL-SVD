@@ -13,7 +13,7 @@ setup(
     description="Description de votre projet",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/votre_nom/votre_projet",
+    url="https://github.com/YassinAJANIF/PyParSVD_GPU.git",
     packages=find_packages(),
     install_requires=load_requirements("requirements.txt"),  # Charge les dépendances
     classifiers=[
