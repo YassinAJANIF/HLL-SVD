@@ -26,7 +26,7 @@ Our library provides a comprehensive set of methods for computing the Singular V
 # Installation
 Use the following command to install the library locally<br>
 ```bash
-$ git clone "https://github.com/YassinAJANIF/PyParSVD_GPU.git"
+$ git clone "https://github.com/YassinAJANIF/New_library.git"
 ```
 **Requirement**:
 To run the library, you must have a Conda environment and libraries such as NumPy, CuPy, HDF5,mpi4py...., All requirement are in  the file "requirements.txt", to do so, please run the file:
