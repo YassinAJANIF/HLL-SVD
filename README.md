@@ -53,7 +53,7 @@ To generate the data, there are two directories:
 ## Running SVD on CPU(s)
 
 ### Serial test
-![SVD Architecture](Figs/serial_division_data.png)
+![SVD Architecture](Figs/serial_data_division.png)
 ### Parallel test
 
 ## Running SVD on GPUs
