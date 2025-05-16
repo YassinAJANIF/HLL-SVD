@@ -48,12 +48,13 @@ Successfully installed nom_du_projet-1.0.0
 ## Generating test data
 To generate the data, there are two directories:
 - **Data_parallel**: This repository contains the file **create_data.py**, which allows you to generate data for parallel tests, such as MPI (on CPU nodes) or CuPy (hybrid CPU/GPU nodes). To use it, simply specify the size of the matrix, the number of batches (num_batches), and the number of ranks (num_ranks), then execute the script.
+![SVD Architecture](Figs/parallel_division_data.png)
 - **Data_serial**: This repository includes the file **create_data.py**, which facilitates the generation of random data. You need to specify the number of columns and rows for the matrix. Once the matrix is created, you can also define the number of batches(num_batches) into which the matrix should be divided.
-
+![SVD Architecture](Figs/serial_data_division.png)
 ## Running SVD on CPU(s)
 
 ### Serial test
-![SVD Architecture](Figs/serial_data_division.png)
+
 ### Parallel test
 
 ## Running SVD on GPUs
