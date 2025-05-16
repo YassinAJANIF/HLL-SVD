@@ -33,6 +33,18 @@ To run the library, you must have a Conda environment and libraries such as NumP
 ```bash
 python3 setup.py
 ```
+
+## Installation in a brand new environment
+In a new conda/mamba environment e.g. `par_svd` run the following command
+
+```bash
+$ (par_svd) mamba install --file requirements.txt -y
+...
+Executing transaction: done
+$ (par_svd) pip install .
+Successfully installed nom_du_projet-1.0.0
+```
+
 # Preprocessing
 To generate the data, there are two directories:
 - **Data_parallel**: This repository contains the file **create_data.py**, which allows you to generate data for parallel tests, such as MPI (on CPU nodes) or CuPy (hybrid CPU/GPU nodes). To use it, simply specify the size of the matrix, the number of batches (num_batches), and the number of ranks (num_ranks), then execute the script.

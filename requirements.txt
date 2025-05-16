@@ -9,4 +9,4 @@ cycler
 defusedxml
 filelock
 certifi
-
+pytest
