@@ -2,7 +2,7 @@ import numpy as np
 import cupy as cp
 from mpi4py import MPI
 import time
-from base_parallel  import ParSVD_Base
+from parallel_svd.base_parallel  import ParSVD_Base
 import os
 
 np.random.seed(10)
