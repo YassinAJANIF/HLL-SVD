@@ -6,7 +6,7 @@
 #SBATCH --partition=all     # partition name
 #SBATHC --nodes=1           # number of nodes
 #SBATCH  --ntasks=96
-###SBATCH --nodelist=cnode706     #Specifie the node name
+###SBATCH --nodelist=cnode706     #Specify the node name
 #SBATCH --cpus-per-task=1    # Number of core per task
 #SBATCH --output=output_mpi/test.log
 #SBATCH --error=output_mpi/test.err
