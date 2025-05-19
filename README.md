@@ -55,6 +55,7 @@ $ python3 create_data.py
 
 <p align="center">
   <img src="Figs/parallel_division_data.png" alt="SVD Architecture" width="500"/>
+   <br/>
   <strong>Figure 2:</strong>  Data division used in the paralell  version
 </p>
 
