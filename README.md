@@ -63,13 +63,13 @@ $ python3 create_data.py
 
 <p align="center">
   <img src="Figs/serial_data_division.png" alt="SVD Architecture" width="500"/>
+  <br/>
   <strong>Figure 2:</strong>  Data division used in the serial version .
 </p>
-## Running SVD on CPU(s)
 
-### Serial test
+## Serial test
 
-### Parallel test
+## Parallel test
 
 ## Running SVD on GPUs
 
