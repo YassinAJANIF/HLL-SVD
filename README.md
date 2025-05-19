@@ -45,7 +45,7 @@ $ (par_svd) pip install .
 Successfully installed nom_du_projet-1.0.0
 ```
 # Testing installation
-## Generating test data
+### Generating test data
 To generate the data, there are two directories:
 - **/Data/Data_parallel**: This repository contains the file **create_data.py**, which allows you to generate data for parallel tests for the cupy+mpi4py version and also for the mpi4py version. To use it correctly, specify the size of the matrix, the number of batches (num_batches), and the number of ranks (num_ranks), The data partitioning will be similar to that in Figure 1:
 ```bash
@@ -67,7 +67,7 @@ $ python3 create_data.py
   <strong>Figure 2:</strong>  Data division used in the serial version .
 </p>
 
-## Serial test
+### Serial test
  For the serial version, once the data is ready, please run the following script:
 
 
@@ -75,12 +75,12 @@ $ python3 create_data.py
 $ python3 main_serial.py
 ```
 
-## Parallel test
+### Parallel test
 
 
 
 
-## Running SVD with cupy+mpi4py(hybrid version)
+#### Running SVD with cupy+mpi4py(hybrid version)
 
 - For the Hybrid  version, if you are working in interactive mode, you can run the following command — for example, with 2 GPUs.
 
@@ -95,7 +95,7 @@ $ SBATCH  job_gpus.sh
 ```
 
 
-## Running the SVD with mpi4p:
+#### Running the SVD with mpi4py:
 -If you are working in interactive mode, you first need to set the number of threads to 1 to avoid shared memory issues, and then run the code as follows :
 
 ```bash
