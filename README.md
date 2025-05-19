@@ -68,15 +68,22 @@ $ python3 create_data.py
 </p>
 
 ## Serial test
+ For the serial version, once the data is ready, please run the following script:
+
+
+```bash
+$ python3 main_serial.py
+```
 
 ## Parallel test
 
-## Running SVD on GPUs
 
-- For the parallel version, if you are working in interactive mode, you can run the following command — for example, with 2 GPUs.
-```bash 
-$ export OPENBLAS_NUM_THREADS=1
-```
+
+
+## Running SVD with cupy+mpi4py(hybrid version)
+
+- For the Hybrid  version, if you are working in interactive mode, you can run the following command — for example, with 2 GPUs.
+
 
 ```bash
 $ mpirun -np 2 python3 main_parallel_gpu.py
@@ -87,6 +94,24 @@ Otherwise, you can run the code using the Slurm script job_gpus.sh:
 $ SBATCH  job_gpus.sh
 ```
 
+
+## Running the SVD with mpi4p:
+-If you are working in interactive mode, you first need to set the number of threads to 1 to avoid shared memory issues, and then run the code as follows :
+
+```bash
+$ export OPENBLAS_NUM_THREADS=1
+```
+
+
+```bash
+$ mpirun -np 2 python3 main_parallel_mpi.py
+```
+
+Otherwise, you can run the code using the Slurm script job_mpi.sh:
+
+```bash
+$ SBATCH  job_mpi.sh
+```
 
 ## References
 
