@@ -8,7 +8,7 @@ import os
 np.random.seed(10)
 CWD = os.getcwd()
 
-class ParSVD_Parallel(ParSVD_Base):
+class HLL_SVD(ParSVD_Base):
     def __init__(self, K, ff, low_rank=False, results_dir='results'):
         super().__init__(K, ff, low_rank, results_dir)
       
@@ -42,27 +42,6 @@ class ParSVD_Parallel(ParSVD_Base):
         qlocal, utemp, self._singular_values = self.parallel_qr(ll)
         self.ulocal = cp.matmul(qlocal, utemp)
         return self
-
-
-
-    def end_process(self, A):
-        gpu_id = self.rank % cp.cuda.runtime.getDeviceCount()
-        cp.cuda.Device(gpu_id).use()
-        cp.cuda.Device(gpu_id).synchronize()
-        if not isinstance(A, cp.ndarray):
-            A = cp.array(A)
-        self._iteration += 1
-        ll = self._ff * cp.matmul(self.ulocal, cp.diag(self._singular_values))
-        ll = cp.concatenate((ll, A), axis=-1)
-        time_start = MPI.Wtime()
-        qlocal, utemp, self._singular_values, T = self.parallel_qr(ll)
-        self._temps += T
-        time_end = MPI.Wtime()
-        self.ulocal = cp.matmul(qlocal, utemp)
-
-        self._gather_modes()
-        return self
-
 
 
 
@@ -132,6 +111,9 @@ class ParSVD_Parallel(ParSVD_Base):
             self._Vt = np.hstack((self._Vt,tmp))
             return self._Vt
 
+
+
+
     def initialize_vt(self, A):
         gpu_id = self.rank % cp.cuda.runtime.getDeviceCount()
         cp.cuda.Device(gpu_id).use()
@@ -152,7 +134,15 @@ class ParSVD_Parallel(ParSVD_Base):
             self._Vt = tmp
             return self._Vt
 
+
+
+
     def low_rank_svd(self, A, K):
+        """
+        This method compute low rank approximation 
+        using randomized SVD, on one GPU
+
+        """
         A_gpu = A
         M, N = A_gpu.shape
         omega_gpu = cp.random.normal(size=(N, 2 * K))
@@ -165,6 +155,9 @@ class ParSVD_Parallel(ParSVD_Base):
         unew_gpu = unew_gpu[:, :K]
         snew_gpu = snew_gpu[:K]
         return unew_gpu, snew_gpu
+
+
+
 
     def save(self):
         results_dir = os.path.join(CWD, self._results_dir)
