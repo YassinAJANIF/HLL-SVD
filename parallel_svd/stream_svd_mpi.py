@@ -11,7 +11,7 @@ np.random.seed(10)
 # Current, parent, and file paths
 CWD = os.getcwd()
 
-class ParSVD_Parallel(ParSVD_Base):
+class ParSVD_Parallel(SVD_Base):
 
     """
     PyParSVD parallel class.

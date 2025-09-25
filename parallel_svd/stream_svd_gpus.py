@@ -8,7 +8,7 @@ import os
 np.random.seed(10)
 CWD = os.getcwd()
 
-class HLL_SVD(ParSVD_Base):
+class HLL_SVD(SVD_Base):
     def __init__(self, K, ff, low_rank=False, results_dir='results'):
         super().__init__(K, ff, low_rank, results_dir)
       

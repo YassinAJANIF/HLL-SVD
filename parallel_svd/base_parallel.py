@@ -8,7 +8,7 @@ from mpi4py import MPI
 # `export OPENBLAS_NUM_THREADS=1`
 
 
-class ParSVD_Base(object):
+class SVD_Base(object):
     """
     PyParSVD base class. It implements data and methods shared
     across the derived classes.
