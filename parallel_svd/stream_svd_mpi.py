@@ -3,7 +3,7 @@ from mpi4py import MPI
 import time
 import os
 
-from base_parallel import ParSVD_Base
+from base_parallel import SVD_Base
 
 
 np.random.seed(10)
