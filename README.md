@@ -1,3 +1,17 @@
+<p align="center">
+  <img src="Figs/HLL_SVD_logo.png" alt="HLL-SVD" width="600"/>
+  <br/>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/build-passing-brightgreen"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/code%20quality-A%2B-blue"/></a>
+</p>
+
+
+## Table of contents
+
+
+
+
 # A new parallel singular value decomposition implementation for hybrid architectures  GPUs+CPUs
 
 ## Table of contents
