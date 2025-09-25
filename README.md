@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Figs/HLL_SVD_logo.png" alt="HLL-SVD" width="600"/>
+  <img src="Figs/HLL_SVD.png" alt="HLL_SVD" width="600"/>
   <br/>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg"/></a>
   <a href="#"><img src="https://img.shields.io/badge/build-passing-brightgreen"/></a>
@@ -7,7 +7,7 @@
 </p>
 
 
-## Table of contents
+
 
 
 
