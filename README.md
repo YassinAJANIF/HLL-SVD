@@ -12,7 +12,7 @@
 
 
 
-# A new parallel singular value decomposition implementation for hybrid architectures  GPUs+CPUs
+
 
 ## Table of contents
 
