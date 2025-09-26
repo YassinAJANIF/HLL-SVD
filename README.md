@@ -3,7 +3,8 @@
   <br/>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg"/></a>
   <a href="#"><img src="https://img.shields.io/badge/build-passing-brightgreen"/></a>
-  <a href="#"><img src="https://img.shields.io/badge/code%20quality-A%2B-blue"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/code%20quality-passing-green"/></a>
+
 </p>
 
 
