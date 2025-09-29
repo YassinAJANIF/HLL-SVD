@@ -26,9 +26,9 @@ class Serial_SVD(SVD_Base):
         Default save path is under a folder called `results` in the current working directory.
     """
 
-    def __init__(self, K, ff, low_rank=False, results_dir='results'):
+    def __init__(self, K, ff, low_rank=False):
         
-        super().__init__(K, ff, low_rank, results_dir)
+        super().__init__(K, ff, low_rank)
 
     def initialize(self, A):
         """
