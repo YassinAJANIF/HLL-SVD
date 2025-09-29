@@ -15,9 +15,9 @@ CWD = os.getcwd()
 # Fix the random seed for reproducibility
 np.random.seed(10)
 
-class ParSVD_Serial(SVD_Base):
+class Serial_SVD(SVD_Base):
     """
-    PyParSVD serial class for performing SVD computations in serial.
+    Serial_SVD  class for performing SVD computations in serial.
 
     :param int K: number of modes to truncate.
     :param int ff: forget factor.
