@@ -27,7 +27,7 @@ class Serial_SVD(SVD_Base):
     """
 
     def __init__(self, K, ff, low_rank=False, results_dir='results'):
-        # Call the constructor of the base class (ParSVD_Base)
+        
         super().__init__(K, ff, low_rank, results_dir)
 
     def initialize(self, A):
