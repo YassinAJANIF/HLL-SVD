@@ -63,9 +63,20 @@ Successfully installed nom_du_projet-1.0.0
 # Testing installation
 ### Generating test data
 To generate the data, there are two directories:
+
+- **/Data/Data_serial**: This repository includes the file **create_data.py**, which allows use  to generate data for serial test. You need to specify the number of columns and rows for the matrix. Once the matrix is defined, you have to define the number of batches(num_batches), The data partitioning will be similar to that in Figure 2.
+
+<p align="center">
+  <img src="Figs/serial_data_division.png" alt="SVD Architecture" width="500"/>
+  <br/>
+  <strong>Figure 2:</strong>  Data division used in the serial version .
+</p>
+
+
+
 - **/Data/Data_parallel**: This repository contains the file **create_data.py**, which allows you to generate data for parallel tests for the cupy+mpi4py version and also for the mpi4py version. To use it correctly, specify the size of the matrix, the number of batches (num_batches), and the number of ranks (num_ranks), The data partitioning will be similar to that in Figure 1:
 ```bash
-$ python3 create_data.py 
+$ python3 create_data.py
 ```
 
 
@@ -75,13 +86,7 @@ $ python3 create_data.py
   <strong>Figure 2:</strong>  Data division used in the paralell  version
 </p>
 
-- **/Data/Data_serial**: This repository includes the file **create_data.py**, which allows use  to generate data for serial test. You need to specify the number of columns and rows for the matrix. Once the matrix is defined, you have to define the number of batches(num_batches), The data partitioning will be similar to that in Figure 2.
 
-<p align="center">
-  <img src="Figs/serial_data_division.png" alt="SVD Architecture" width="500"/>
-  <br/>
-  <strong>Figure 2:</strong>  Data division used in the serial version .
-</p>
 
 ### Serial test
  For the serial version, once the data is ready, please run the following script:
