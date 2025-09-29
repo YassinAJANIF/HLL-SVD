@@ -11,16 +11,16 @@ CF  = os.path.realpath(__file__)
 CFD = os.path.dirname(CF)
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-from serial_svd.serial_stream  import ParSVD_Serial
+from serial_svd.serial_stream  import Serial_SVD
 
 
 #path to data
 
-path = os.path.join(CFD, './Data/Data_serial/')
+path = os.path.join(CFD, './data/data_serial/')
 #path = os.path.join('/home/yajanif@ec-nantes.fr/convert/pression/pyparsvd_200_test/tutorials/basic/data/parallel')
 
 # Initialize the SVD class with parameters
-SerSVD= ParSVD_Serial(K=10, ff=1.0)
+SerSVD= Serial_SVD(K=10, ff=1.0)
 
 # Serial data
 initial_data_ser = np.load(os.path.join(path, 'Batch_0_data.npy'))
