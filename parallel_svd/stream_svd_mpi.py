@@ -2,11 +2,9 @@ import numpy as np
 from mpi4py import MPI
 import time
 import os
-
 from base_parallel import SVD_Base
 
 
-np.random.seed(10)
 
 # Current, parent, and file paths
 CWD = os.getcwd()
@@ -14,20 +12,18 @@ CWD = os.getcwd()
 class SVD_MPI(SVD_Base):
 
     """
-    PyParSVD parallel class.
+    SVD_MPI parallel class.
 
     :param int K: number of modes to truncate.
     :param int ff: forget factor.
     :param bool low_rank: if True, it uses a low-rank algorithm to speed up computations.
-    :param str results_dir: if specified, it saves the results in `results_dir`. \
-        Default save path is under a folder called `results` in the current working path.
+    
     """
 
     def __init__(self, K, ff, low_rank=False, results_dir='results'):
-        super().__init__(K, ff, low_rank, results_dir)
-     #   self.comm = MPI.COMM_WORLD  # Initialize the MPI communicator
-      #  self.rank = self.comm.Get_rank()  # Get the rank of the process
-       # self.nprocs = self.comm.Get_size()  # Get the number of processes
+        super().__init__(K, ff, low_rank)
+
+
 
     def initialize(self, A):
         """
@@ -36,17 +32,13 @@ class SVD_MPI(SVD_Base):
         :param ndarray/str A: initial data matrix
         """        
         # Perform parallel QR decomposition
-        t1 = MPI.Wtime()
-        q,ulocal, self._singular_values = self.parallel_qr(A)
-        t2 = MPI.Wtime()
-#        print("le temps d'execution de la decomposion QR en parallel est === ",t2-t1)
-        t1 = MPI.Wtime()
+    
+        q,ulocal, self._singular_values = self.parallel_qr(A)                
         self.ulocal=np.matmul(q,ulocal)
-        t2= MPI.Wtime()
- #       print("le temps d execution de produit au niveau de l'initialisation est ", t2-t1)
-      #  self._gather_modes()
-
         return self
+
+
+
 
     def incorporate_data(self, A):
         """
@@ -65,32 +57,13 @@ class SVD_MPI(SVD_Base):
         
        
         self.ulocal = np.matmul(qlocal, utemp)
-       
-
+        
+         #self._gather_modes()
         return self
 
-    def end_process(self, A):
-        """
-        Incorporate new data in a streaming way for SVD computation.
+        
 
-        :param ndarray/str A: new data matrix.
-        """
-        self._iteration += 1
-        ll = self._ff * np.matmul(self.ulocal, np.diag(self._singular_values))              
-        ll = np.concatenate((ll, A), axis=-1)
-        qlocal, utemp, self._singular_values = self.parallel_qr(ll)
-        self.ulocal = np.matmul(qlocal, utemp)
-    
-        self._gather_modes()
-    
-
-        return self
-
-
-
-
-
-    def parallel_qr(self, A):
+    def parallel_qr(self, A)
         """
         Perform parallel QR decomposition.
 
@@ -148,6 +121,8 @@ class SVD_MPI(SVD_Base):
 
         return qlocal, unew, snew
 
+
+
     def low_rank_svd(self, A, K):
         """
         Performs randomized SVD.
@@ -182,9 +157,9 @@ class SVD_MPI(SVD_Base):
 
 
     def initialize_vt(self, A):
-        
-        
-        
+        """
+        Initialize the matrix Vt in order to compute the temporal modes.
+        """                        
         n, m = A.shape
         S = np.diag(self._singular_values)
         S = np.linalg.inv(S)
@@ -199,7 +174,9 @@ class SVD_MPI(SVD_Base):
 
 
     def compute_vt(self, A):
-        
+        """
+        Incorporate new batches in a streaming fashion to compute the temporal modes.
+        """
       
         n, m = A.shape
         S = np.diag(self._singular_values)

@@ -5,14 +5,21 @@ import time
 from parallel_svd.base_parallel  import SVD_Base
 import os
 
-np.random.seed(10)
-CWD = os.getcwd()
+
+
 
 class HLL_SVD(SVD_Base):
-    def __init__(self, K, ff, low_rank=False, results_dir='results'):
-        super().__init__(K, ff, low_rank, results_dir)
-      
+    def __init__(self, K, ff, low_rank=False):
+        super().__init__(K, ff, low_rank)
 
+        """
+        SVD_MPI parallel class.
+
+        :param int K: number of modes to truncate.
+        :param int ff: forget factor.
+        :param bool low_rank: if True, it uses a low-rank algorithm to speed up computations.
+
+        """
 
 
     def initialize(self, A):
@@ -30,7 +37,12 @@ class HLL_SVD(SVD_Base):
         self.ulocal = cp.matmul(q, ulocal)
         return self
 
+
+
     def incorporate_data(self, A):
+        """
+        Incorporate new data in a streaming way for SVD computation.
+        """
         gpu_id = self.rank % cp.cuda.runtime.getDeviceCount()
         cp.cuda.Device(gpu_id).use()
         cp.cuda.Device(gpu_id).synchronize()
@@ -44,8 +56,10 @@ class HLL_SVD(SVD_Base):
         return self
 
 
-
     def parallel_qr(self, A):
+        """
+        Compute the SVD in parallel using direct TSQR  on multiple GPUs.
+        """
         gpu_id = self.rank % cp.cuda.runtime.getDeviceCount()
         cp.cuda.Device(gpu_id).synchronize()
 
@@ -94,7 +108,11 @@ class HLL_SVD(SVD_Base):
             
             return qlocal_gpu, unew, snew
 
+
     def compute_vt(self, A):
+        """
+        Incorporate new batches in parallel to compute the matrix of temporal modes in a streaming fashion.
+        """
         gpu_id = self.rank % cp.cuda.runtime.getDeviceCount()
         cp.cuda.Device(gpu_id).use()
         if not isinstance(A, cp.ndarray):
@@ -113,8 +131,10 @@ class HLL_SVD(SVD_Base):
 
 
 
-
     def initialize_vt(self, A):
+        """
+        Initialization of the matrix Vt  in order  to compute the temporal modes.
+        """
         gpu_id = self.rank % cp.cuda.runtime.getDeviceCount()
         cp.cuda.Device(gpu_id).use()
         if not isinstance(A, cp.ndarray):
@@ -124,16 +144,12 @@ class HLL_SVD(SVD_Base):
         S = cp.linalg.inv(S)
         U = self.ulocal.T
         V = cp.matmul(cp.matmul(S, U), A)
-        V = cp.asnumpy(V).astype(np.float64)
-        print("la taille de V",V.shape)
-        tmp = np.zeros((self._K, m))
-        print("le taille s de tmp",tmp.shape)
-
+        V = cp.asnumpy(V).astype(np.float64)        
+        tmp = np.zeros((self._K, m))    
         self.comm.Allreduce(V, tmp, op=MPI.SUM)
         if self.rank == 0:
             self._Vt = tmp
             return self._Vt
-
 
 
 
@@ -157,19 +173,6 @@ class HLL_SVD(SVD_Base):
         return unew_gpu, snew_gpu
 
 
-
-
-    def save(self):
-        results_dir = os.path.join(CWD, self._results_dir)
-        if not os.path.exists(results_dir):
-            os.makedirs(results_dir)
-        pathname_sv = os.path.join(results_dir, 'parallel_singular_values.npy')
-        np.save(pathname_sv, self._singular_values)
-        pathname_m = os.path.join(results_dir, 'parallel_POD.npy')
-        if self.rank == 0:
-            np.save(pathname_m, self._modes)
-        self._singular_values = pathname_sv
-        self._modes = pathname_m
 
     def _gather_modes(self):
         modes_global = self.comm.gather(self.ulocal, root=0)

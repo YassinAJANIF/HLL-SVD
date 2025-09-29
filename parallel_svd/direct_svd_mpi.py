@@ -4,11 +4,11 @@ import os, sys
 # from utils import low_rank_svd, generate_right_vectors  # Assurez-vous d'importer ces fonctions
 
 CWD = os.getcwd()
-from base_parallel import ParSVD_Base
+from base_parallel import SVD_Base
 
 
 
-class Dsvd(ParSVD_Base):
+class Dsvd(SVD_Base):
     def __init__(self, K, ff, low_rank=False, results_dir='results'):
         super().__init__(K, ff, low_rank, results_dir)
   
