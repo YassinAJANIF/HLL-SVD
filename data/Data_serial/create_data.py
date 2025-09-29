@@ -2,7 +2,7 @@ import numpy as np
 import os
 
 # Paras
-rows=6000000   # Nombre de lignes
+rows=60000   # Nombre de lignes
 cols=30      # Nombre de colonnes (skinny matrix)
 batch_size=10 # Taille de chaque batch en termes de colonnes
 
@@ -37,7 +37,7 @@ def create_and_split_matrix(rows, cols, batch_size, output_dir=None):
         end_col = min(start_col + batch_size, cols)
 
         batch = matrix[:, start_col:end_col]
-        batch_filename = os.path.join(output_dir, f"tmp/Batch_{i}_data.npy")
+        batch_filename = os.path.join(output_dir, f"Batch_{i}_data.npy")
         np.save(batch_filename, batch.astype(np.float32))  # Conversion en float32 (redondante ici, mais sure)
         print(f"Batch {i} sauvegarde dans {batch_filename}")
 

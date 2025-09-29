@@ -1,11 +1,11 @@
 import numpy as np
 
 # Paramètres : nombre de batchs et nombre de ranks
-num_batches =2 # Par exemple, diviser en 3 batchs
+num_batches =5 # Par exemple, diviser en 3 batchs
 num_ranks = 2#Par exemple, 4 ranksi
 
 # Créer une matrice aléatoire de taille 600000x100
-matrix = np.random.rand(600_000,50).astype(np.float32)  #          (30000000,300)#la version ancienne  (6000000,100), meilleur config
+matrix = np.random.rand(600000,100).astype(np.float32)  #          (30000000,300)#la version ancienne  (6000000,100), meilleur config
 
 
 # Sauvegarder la matrice complète dans un fichier
