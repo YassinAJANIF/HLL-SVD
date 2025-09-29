@@ -17,7 +17,7 @@ from serial_svd.serial_stream  import Serial_SVD
 #path to data
 
 path = os.path.join(CFD, './data/data_serial/')
-#path = os.path.join('/home/yajanif@ec-nantes.fr/convert/pression/pyparsvd_200_test/tutorials/basic/data/parallel')
+
 
 # Initialize the SVD class with parameters
 SerSVD= Serial_SVD(K=10, ff=1.0)
