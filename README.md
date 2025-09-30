@@ -64,7 +64,7 @@ Successfully installed nom_du_projet-1.0.0
 ### Generating test data
 To generate the data, there are two directories:
 
-- **/Data/Data_serial** contains the **script split_data_serial.py** for generating test data for the serial implementation. Specify the matrix dimensions (rows and columns) and the number of batches (num_batches). The data are partitioned column-wise into num_batches; Figure 1 shows the case num_batches = 2.”
+- **/Data/Data_serial**: contains the script **split_data_serial.py** for generating test data for the serial implementation. Specify the matrix dimensions (rows and columns) and the number of batches (num_batches). The data are partitioned column-wise into num_batches. Figure 1 shows the case num_batches = 2.
 ```bash
 $ python3 split_data_serial.py
 ```
@@ -76,7 +76,7 @@ $ python3 split_data_serial.py
 </p>
 
 
-- **/Data/Data_parallel**: contains the script **split_data_parallel.py** for generating test datasets for parallel implementations. Specify the matrix dimensions, the number of batches (num_batches), and the number of MPI ranks (num_ranks). Figure 2 illustrates the case with two batches and two MPI ranks..
+- **/Data/Data_parallel**: contains the script **split_data_parallel.py** for generating test datasets for parallel implementations. Specify the matrix dimensions, the number of batches (num_batches), and the number of MPI ranks (num_ranks). Figure 2 illustrates the case with two batches and two MPI ranks.
 <p align="center">
   <img src="figs/parallel_division_data.png" alt="SVD Architecture" width="500"/>
    <br/>
