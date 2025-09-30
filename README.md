@@ -64,7 +64,7 @@ Successfully installed nom_du_projet-1.0.0
 ### Generating test data
 To generate the data, there are two directories:
 
-- **/Data/Data_serial**: contains the script **split_data_serial.py** for generating test data for the serial implementation. Specify the matrix dimensions (rows and columns) and the number of batches (num_batches). The resulting partitioning follows the scheme illustrated in Figure 2.
+- **/Data/Data_serial** contains the script split_data_serial.py for generating test data for the serial implementation. Specify the matrix dimensions (rows and columns) and the number of batches (num_batches). The data are partitioned column-wise into num_batches; Figure 1 shows the case num_batches = 2.”
 ```bash
 $ python3 split_data_serial.py
 ```
@@ -72,18 +72,15 @@ $ python3 split_data_serial.py
 <p align="center">
   <img src="figs/serial_data_division.png" alt="SVD Architecture" width="500"/>
   <br/>
-  <strong>Figure 1:</strong>  Data division used in the serial version .
+  <strong>Figure 1:</strong> Column-wise data partitioning for the serial version (example with num_batches = 2) .
 </p>
 
 
-
--**/Data/Data_parallel**: contains the script **split_data_parallel.py** for generating test datasets for both the CuPy+mpi4py and the mpi4py-only implementations. Specify the matrix dimensions, the number of batches (num_batches), and the number of MPI ranks (num_ranks). The resulting partitioning mirrors the scheme shown in Figure 2.
-
-
+- **/Data/Data_parallel**: contains the script split_data_parallel.py for generating test datasets for parallel implementations. Specify the matrix dimensions, the number of batches (num_batches), and the number of MPI ranks (num_ranks). The resulting partitioning follows the scheme shown in Figure 2.
 <p align="center">
   <img src="figs/parallel_division_data.png" alt="SVD Architecture" width="500"/>
    <br/>
-  <strong>Figure 2:</strong>  Data division used in the paralell  version
+  <strong>Figure 2:</strong>  Column-wise batching (n/2) and row-wise split across two MPI ranks (m/2).
 </p>
 
 
