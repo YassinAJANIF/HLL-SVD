@@ -10,21 +10,19 @@ from mpi4py import MPI
 
 class SVD_Base(object):
     """
-    PyParSVD base class. It implements data and methods shared
-    across the derived classes.
+    SVD_Base class. It implements data and methods shared
+    across the derived classes(HLL_SVD, SVD_MPI, Dsvd).
 
     :param int K: number of modes to truncate.
     :param int ff: forget factor.
     :param bool low_rank: if True, it uses a low rank algorithm to speed up computations.
-    :param str results_dir: if specified, it saves the results in `results_dir`.
+    
     """
 
-    def __init__(self, K, ff, low_rank=False, results_dir='results'):
+    def __init__(self, K, ff, low_rank=False):
         self._K = K
         self._ff = ff
         self._low_rank = low_rank
-        self._results_dir = results_dir
-        self._iteration = 0
         self._Vt = None
 
         # Initialize MPI
@@ -104,43 +102,4 @@ class SVD_Base(object):
 
     # --- Plotting Methods ---
 
-    def plot_singular_values(self, idxs=[0], title='', figsize=(12, 8), filename=None):
-        """
-        See method implementation in the postprocessing module.
-        """
-        post.plot_singular_values(
-            self.singular_values,
-            title=title,
-            figsize=figsize,
-            path=self._results_dir,
-            filename=filename,
-            rank=self.rank)
-
-    def plot_1D_modes(self, idxs=[0], title='', figsize=(12, 8), filename=None):
-        """
-        See method implementation in the postprocessing module.
-        """
-        post.plot_1D_modes(
-            self.modes,
-            idxs=idxs,
-            title=title,
-            figsize=figsize,
-            path=self._results_dir,
-            filename=filename,
-            rank=self.rank)
-
-    def plot_2D_modes(self, num_rows, num_cols, idxs=[0], title='', figsize=(12, 8), filename=None):
-        """
-        See method implementation in the postprocessing module.
-        """
-        post.plot_2D_modes(
-            self.modes,
-            num_rows,
-            num_cols,
-            self._nprocs,
-            idxs=idxs,
-            title=title,
-            figsize=figsize,
-            path=self._results_dir,
-            filename=filename,
-            rank=self.rank)
+    
