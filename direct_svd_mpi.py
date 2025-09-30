@@ -1,212 +1,307 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os
+import sys
 import numpy as np
 from mpi4py import MPI
-import os, sys
-# from utils import low_rank_svd, generate_right_vectors  # Assurez-vous d'importer ces fonctions
 
-CWD = os.getcwd()
 from base_parallel import SVD_Base
 
 
-
 class Dsvd(SVD_Base):
-    def __init__(self, K, ff, low_rank=False, results_dir='results'):
+    """
+    Distributed SVD algorithms on top of mpi4py.
+
+    This class provides multiple SVD variants designed for tall-and-skinny (m >> n)
+    matrices that are row-partitioned across MPI ranks:
+
+      - SVD_TSQR   : TSQR (Tall-and-Skinny QR) + final SVD on the stacked R.
+      - RSVD_TSQR  : Randomized range finder + TSQR + final SVD.
+      - SVD_APMOS  : APMOS-style right-vector construction then global SVD.
+      - SVD_EVD    : Snapshot method via eigen-decomposition of A^T A.
+
+    Notes
+    -----
+    * We assume each rank holds a local block A_i with the same number of columns.
+    * All collective operations use self.comm (provided by SVD_Base).
+    * Optional helper functions can be injected at init:
+        - low_rank_svd_fn(rfinal, k) -> (U, s, Vt)
+        - generate_right_vectors_fn(A, k) -> (V_local, s_local)
+    """
+
+    def __init__(
+        self,
+        K: int,
+        ff,
+        low_rank: bool = False,
+        results_dir: str = "results",
+        low_rank_svd_fn=None,
+        generate_right_vectors_fn=None,
+    ):
+        """
+        Parameters
+        ----------
+        K : int
+            Target rank (number of singular values/vectors to return).
+        ff : Any
+            Kept for compatibility with SVD_Base signature.
+        low_rank : bool, optional
+            If True, use the injected low-rank SVD routine where applicable.
+        results_dir : str, optional
+            Directory used by the base class for outputs.
+        low_rank_svd_fn : callable or None
+            Custom function for truncated SVD on a small core matrix (R_final).
+        generate_right_vectors_fn : callable or None
+            Custom function for APMOS to build right vectors locally.
+        """
         super().__init__(K, ff, low_rank, results_dir)
-  
+        self._low_rank_svd_fn = low_rank_svd_fn
+        self._gen_right_vecs_fn = generate_right_vectors_fn
 
-  
-
-    def tsqr1(self, A):
+    # -------------------------------------------------------------------------
+    # TSQR-based SVD
+    # -------------------------------------------------------------------------
+    def SVD_TSQR(self, A: np.ndarray):
         """
-        Tall-and-skinny QR decomposition followed by global reduction and optional low-rank SVD.
-        """
-        # �tape 1 : QR locale
-        q, r = np.linalg.qr(A)
-        rlocal_shape_0 = r.shape[0]
+        Compute SVD via TSQR:
+          1) Local QR: A_i = Q_i R_i
+          2) Gather all R_i to rank 0 and stack -> R_stack
+          3) QR(R_stack) = Q_g R_final
+          4) SVD(R_final) = U_new Σ V^T
+          5) U_i = Q_i @ U_new
 
-        # �tape 2 : rassemblement des R locaux
-        r_global = self.comm.gather(r, root=0)
+        Returns
+        -------
+        U_local : np.ndarray, shape (m_i, K or n)
+        s       : np.ndarray, shape (K or n,)
+        Vt      : np.ndarray, shape (K or n, n)
+        """
+        # Local QR
+        Q_i, R_i = np.linalg.qr(A, mode="reduced")
+        r_rows = R_i.shape[0]  # equals n (number of columns of A)
+
+        # Gather local R blocks on root
+        R_list = self.comm.gather(R_i, root=0)
 
         if self.rank == 0:
-            # Concat�nation de R
-            r_stack = np.concatenate(r_global, axis=0)
-            qglobal, rfinal = np.linalg.qr(r_stack)
-            qglobal = -qglobal  # Pour homog�n�it�
-            rfinal = -rfinal
+            # Stack all R blocks by rows
+            R_stack = np.concatenate(R_list, axis=0)
 
-            # Calcul de Qlocal pour le rang 0
-            qlocal = np.matmul(q, qglobal[:rlocal_shape_0])
+            # Second-stage QR
+            Q_g, R_final = np.linalg.qr(R_stack, mode="reduced")
 
-            # Envoi des blocs de Qglobal aux autres rangs
-            for rank in range(1, self.nprocs):
-                start = rank * rlocal_shape_0
-                end = (rank + 1) * rlocal_shape_0
-                self.comm.send(qglobal[start:end], dest=rank, tag=rank + 10)
+            # Optional sign flip for deterministic sign convention
+            Q_g = -Q_g
+            R_final = -R_final
 
-            # �tape SVD (Levy-Lindenbaum)
-            if self._low_rank:
-                unew, snew, vt = low_rank_svd(rfinal, self._K)
+            # Slice Q_g per rank (each slice has r_rows rows)
+            Q_slice_0 = Q_g[:r_rows]
+            Q_slices = [Q_slice_0] + [
+                Q_g[i * r_rows : (i + 1) * r_rows] for i in range(1, self.nprocs)
+            ]
+
+            # Local projection on root
+            Qlocal = Q_i @ Q_slices[0]
+
+            # Send the appropriate slice to each non-root rank
+            for r in range(1, self.nprocs):
+                self.comm.send(Q_slices[r], dest=r, tag=100 + r)
+
+            # Final SVD on the small core
+            if self._low_rank and self._low_rank_svd_fn is not None:
+                U_new, s, Vt = self._low_rank_svd_fn(R_final, self._K)
             else:
-                unew, snew, vt = np.linalg.svd(rfinal, full_matrices=False)
+                U_full, s_full, Vt_full = np.linalg.svd(R_final, full_matrices=False)
+                U_new = U_full[:, : self._K] if self._K else U_full
+                s = s_full[: self._K] if self._K else s_full
+                Vt = Vt_full[: self._K] if self._K else Vt_full
         else:
-            qglobal = self.comm.recv(source=0, tag=self.rank + 10)
-            qlocal = np.matmul(q, qglobal)
-            unew = None
-            snew = None
-            vt = None
+            Q_g_slice = self.comm.recv(source=0, tag=100 + self.rank)
+            Qlocal = Q_i @ Q_g_slice
+            U_new = s = Vt = None
 
-        # Broadcast � tous les rangs
-        unew = self.comm.bcast(unew, root=0)
-        snew = self.comm.bcast(snew, root=0)
-        vt = self.comm.bcast(vt, root=0)
+        # Broadcast SVD factors to all ranks
+        U_new = self.comm.bcast(U_new, root=0)
+        s = self.comm.bcast(s, root=0)
+        Vt = self.comm.bcast(Vt, root=0)
 
-        Ui = np.matmul(qlocal, unew)
-        return Ui, snew, vt
+        # Build local left singular vectors
+        U_local = Qlocal @ U_new
+        return U_local, s, Vt
 
- 
-
-    def tsqr1_svd(self, A):
+    # -------------------------------------------------------------------------
+    # Randomized SVD + TSQR
+    # -------------------------------------------------------------------------
+    def RSVD_TSQR(self, A: np.ndarray, n_iter: int = 1, seed: int = 42):
         """
-        Computing the SVD using the tsqr1 algorithm
+        Randomized SVD using a power iteration, followed by TSQR on the sketch.
+
+        Steps
+        -----
+        1) Draw random test matrix Ω (n x K).
+        2) Form Y = A Ω and (optionally) apply n_iter power iterations:
+           Y ← A (A^T Y) to improve subspace capture.
+        3) Local QR on Y_i; gather and do the TSQR reduction.
+        4) SVD on the reduced core; map back to U_i.
+
+        Parameters
+        ----------
+        A : np.ndarray
+            Local block (m_i x n), with common n across ranks.
+        n_iter : int
+            Number of power iterations (>= 0).
+        seed : int
+            RNG seed for reproducibility.
+
+        Returns
+        -------
+        U_local, s, Vt
         """
-        Ui, S, V = self.tsqr1(A)
-        return Ui, S, V
+        m_i, n = A.shape
+        rng = np.random.default_rng(seed)
+        Omega = rng.normal(size=(n, self._K))
 
+        # Randomized range finder with optional power iterations
+        Y = A @ Omega
+        for _ in range(max(0, n_iter)):
+            Y = A @ (A.T @ Y)
 
+        # Local QR on the sketch
+        Q_i, R_i = np.linalg.qr(Y, mode="reduced")
+        r_rows = R_i.shape[0]  # should be K
 
-
-
-    def tsqr1_randomized(self, A, n_iter):
-        """
-        Perform parallel randomized  QR decomposition.
-
-        :param ndarray A: data matrix
-        :return: qlocal (local Q matrix), unew (updated U matrix), snew (singular values)
-        """
-        # Perform local QR
-        num_rows, num_cols = A.shape        
-        np.random.seed(42)      
-        omega = np.random.normal(size=(num_cols,self._K))
-      
-        Y = np.matmul(A, omega)
-        for _ in range(n_iter):
-            Y = np.matmul(A, np.matmul(A.T, Y))  # It�rations pour renforcer l'orthogonalisation
-
-        t4=MPI.Wtime()
-        q, r = np.linalg.qr(Y)
-        t5=MPI.Wtime()
-        rlocal_shape_0 = r.shape[0]
-        # Gather data at rank 0:
-        r_global = self.comm.gather(r, root=0)
-        # Perform QR at rank 0:
-        if self.rank == 0:
-            temp = r_global[0]
-            for i in range(self.nprocs-1):
-                temp = np.concatenate((temp, r_global[i+1]), axis=0)
-            r_global = temp
-
-            qglobal, rfinal = np.linalg.qr(r_global)
-            qglobal = -qglobal  # Trick for consistency
-            rfinal = -rfinal
-
-            # For this rank
-            qlocal = np.matmul(q, qglobal[:rlocal_shape_0])
-
-            # Send to other ranks
-            for rank in range(1, self.nprocs):
-                self.comm.send(qglobal[rank*rlocal_shape_0: (rank+1)*rlocal_shape_0], dest=rank, tag=rank+10)
-
-            # Perform SVD on rfinal
-            if self._low_rank:
-                unew, snew, vt = self.low_rank_svd(rfinal, self._K)  # Use self.low_rank_svd
-            else:
-                unew, snew, vt = np.linalg.svd(rfinal)  # Discard the third value (Vh)
-                unew=unew[:,:self._K]
-                snew=snew[:self._K]
-        else:
-            # Receive qglobal slices from rank 0
-            qglobal = self.comm.recv(source=0, tag=self.rank+10)
-
-            # For this rank
-            qlocal = np.matmul(q, qglobal)
-
-            # To receive new singular vectors
-            unew = None
-            snew = None
-            vt = None
-
-        unew = self.comm.bcast(unew, root=0)
-        snew = self.comm.bcast(snew, root=0)
-        vt = self.comm.bcast(vt, root=0)
-
-        Ui = np.matmul(qlocal, unew)
-        return Ui, snew, vt
-
-
-    def tsqr1_svd_randomized(self, A, n_iter):
-        """
-        Effectue la SVD via TSQR sur la matrice A locale.
-        """
-        Ui, S, V = self.tsqr1_randomized(A,n_iter)
-        return Ui, S, V
-
-
-
-
-    def APMOS(self, A):
-        """
-        SVD by APMOS.
-        """
-        vlocal, slocal = generate_right_vectors(A, self._K)
-        wlocal = np.matmul(vlocal, np.diag(slocal).T)
-        wglobal = self.comm.gather(wlocal, root=0)
+        # Gather R_i to root
+        R_list = self.comm.gather(R_i, root=0)
 
         if self.rank == 0:
-            temp = np.concatenate(wglobal, axis=-1)
-            if self._low_rank:
-                x, s, _ = low_rank_svd(temp, self._K)
+            R_stack = np.concatenate(R_list, axis=0)
+            Q_g, R_final = np.linalg.qr(R_stack, mode="reduced")
+
+            # Optional sign flip for determinism
+            Q_g = -Q_g
+            R_final = -R_final
+
+            # Slice Q_g by rank and project local subspace
+            Q_slice_0 = Q_g[:r_rows]
+            Q_slices = [Q_slice_0] + [
+                Q_g[i * r_rows : (i + 1) * r_rows] for i in range(1, self.nprocs)
+            ]
+            Qlocal = Q_i @ Q_slices[0]
+
+            for r in range(1, self.nprocs):
+                self.comm.send(Q_slices[r], dest=r, tag=200 + r)
+
+            # Core SVD (truncated if K is set)
+            if self._low_rank and self._low_rank_svd_fn is not None:
+                U_new, s, Vt = self._low_rank_svd_fn(R_final, self._K)
             else:
-                x, s, _ = np.linalg.svd(temp, full_matrices=False)
+                U_full, s_full, Vt_full = np.linalg.svd(R_final, full_matrices=False)
+                U_new = U_full[:, : self._K] if self._K else U_full
+                s = s_full[: self._K] if self._K else s_full
+                Vt = Vt_full[: self._K] if self._K else Vt_full
         else:
-            x = None
+            Q_g_slice = self.comm.recv(source=0, tag=200 + self.rank)
+            Qlocal = Q_i @ Q_g_slice
+            U_new = s = Vt = None
+
+        U_new = self.comm.bcast(U_new, root=0)
+        s = self.comm.bcast(s, root=0)
+        Vt = self.comm.bcast(Vt, root=0)
+
+        U_local = Qlocal @ U_new
+        return U_local, s, Vt
+
+    # -------------------------------------------------------------------------
+    # APMOS-style SVD
+    # -------------------------------------------------------------------------
+    def SVD_APMOS(self, A: np.ndarray):
+        """
+        APMOS variant: build (local) right vectors, reduce globally, then SVD.
+
+        Requires
+        --------
+        An injected callable `generate_right_vectors_fn(A, K)` returning:
+           V_local : (n x K)
+           s_local : (K,)
+        """
+        if self._gen_right_vecs_fn is None:
+            raise RuntimeError("generate_right_vectors_fn must be provided for SVD_APMOS.")
+
+        V_local, s_local = self._gen_right_vecs_fn(A, self._K)  # (n x K), (K,)
+        # Weight local contribution
+        W_local = V_local * s_local[None, :]
+
+        # Gather all W_local on root (as a list of (n x K))
+        W_list = self.comm.gather(W_local, root=0)
+
+        if self.rank == 0:
+            W_stack = np.concatenate(W_list, axis=1)  # (n x (K * nprocs))
+
+            if self._low_rank and self._low_rank_svd_fn is not None:
+                X, s, _ = self._low_rank_svd_fn(W_stack, self._K)
+            else:
+                X_full, s_full, _ = np.linalg.svd(W_stack, full_matrices=False)
+                X = X_full[:, : self._K]
+                s = s_full[: self._K]
+        else:
+            X = None
             s = None
 
-        x = self.comm.bcast(x, root=0)
+        X = self.comm.bcast(X, root=0)
         s = self.comm.bcast(s, root=0)
 
-        phi_local = [1.0 / s[i] * np.matmul(A, x[:, i:i+1]) for i in range(self._K)]
-        temp = np.concatenate(phi_local, axis=-1)
+        # Build local left singular vectors: phi_i = A_i X Σ^{-1}
+        # Compute column-wise: phi[:, j] = (1/s[j]) * A @ X[:, j]
+        Phi_cols = [(A @ X[:, j : j + 1]) * (1.0 / s[j]) for j in range(self._K)]
+        U_local = np.concatenate(Phi_cols, axis=1)
+        return U_local, s
 
-        return temp, s[:self._K]
-
-
-
-
-    def EVD(self, A):
+    # -------------------------------------------------------------------------
+    # Snapshot SVD (EVD of A^T A)
+    # -------------------------------------------------------------------------
+    def SVD_EVD(self, A: np.ndarray):
         """
-        SVD using the snapshot approach 
-        """
-        A = A.astype(np.float64)
-        local_rows, n = A.shape
-        local_ATA = np.dot(A.T, A).astype(np.float64)
-        ATA = np.zeros((n, n), dtype=np.float64)
+        Snapshot SVD via eigen-decomposition of G = A^T A.
 
-        self.comm.Allreduce(local_ATA, ATA, op=MPI.SUM)
+        Steps
+        -----
+        1) Each rank forms G_i = A_i^T A_i (n x n).
+        2) Allreduce sum to get G.
+        3) EVD on root: G = V Λ V^T (Λ >= 0).
+        4) Σ = sqrt(Λ), take top-K.
+        5) U_i = A_i V_K Σ^{-1}.
+
+        Returns
+        -------
+        U_local : (m_i x K)
+        s       : (K,)
+        V       : (n x K)
+        """
+        A = A.astype(np.float64, copy=False)
+        _, n = A.shape
+
+        G_local = (A.T @ A).astype(np.float64, copy=False)
+        G = np.zeros((n, n), dtype=np.float64)
+        self.comm.Allreduce(G_local, G, op=MPI.SUM)
 
         if self.rank == 0:
-            eig_values, eig_vectors = np.linalg.eigh(ATA)
-            idx = np.argsort(eig_values)[::-1]
-            eig_values = eig_values[idx]
-            eig_vectors = eig_vectors[:, idx]
-            eig_values_truncated = eig_values[:self._K]
-            V_truncated = eig_vectors[:, :self._K]
-            singular_values_truncated = np.sqrt(eig_values_truncated)
+            evals, evecs = np.linalg.eigh(G)
+            idx = np.argsort(evals)[::-1]
+            evals = evals[idx]
+            evecs = evecs[:, idx]
+
+            s = np.sqrt(np.maximum(evals[: self._K], 0.0))
+            V = evecs[:, : self._K]
         else:
-            V_truncated = None
-            singular_values_truncated = None
+            V = None
+            s = None
 
-        V_truncated = self.comm.bcast(V_truncated, root=0)
-        singular_values_truncated = self.comm.bcast(singular_values_truncated, root=0)
-        U_local = np.dot(A, V_truncated) / singular_values_truncated
+        V = self.comm.bcast(V, root=0)
+        s = self.comm.bcast(s, root=0)
 
-        return U_local, singular_values_truncated, V_truncated
+        # Avoid division with broadcasting surprises
+        inv_s = np.where(s > 0, 1.0 / s, 0.0)
+        U_local = (A @ V) * inv_s[None, :]
+        return U_local, s, V
 
