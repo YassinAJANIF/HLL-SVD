@@ -64,7 +64,7 @@ Successfully installed nom_du_projet-1.0.0
 ### Generating test data
 To generate the data, there are two directories:
 
-- **/Data/Data_serial**: This repository includes the file **split_data_serial.py**, which allows use  to generate data for serial test. You need to specify the number of columns and rows for the matrix. Once the matrix is defined, you have to define the number of batches(num_batches), The data partitioning will be similar to that in Figure 2.
+- **/Data/Data_serial**: contains the script **split_data_serial.py** for generating test data for the serial implementation. Specify the matrix dimensions (rows and columns) and the number of batches (num_batches). The resulting partitioning follows the scheme illustrated in Figure 2.
 ```bash
 $ python3 split_data_serial.py
 ```
@@ -72,13 +72,12 @@ $ python3 split_data_serial.py
 <p align="center">
   <img src="figs/serial_data_division.png" alt="SVD Architecture" width="500"/>
   <br/>
-  <strong>Figure 2:</strong>  Data division used in the serial version .
+  <strong>Figure 1:</strong>  Data division used in the serial version .
 </p>
 
 
 
-- **/Data/Data_parallel**: This repository contains the file **split_data_parallel.py**, which allows you to generate data for parallel tests for the cupy+mpi4py version and also for the mpi4py version. To use it correctly, specify the size of the matrix, the number of batches (num_batches), and the number of ranks (num_ranks), The data partitioning will be similar to that in Figure 1:
-
+-**/Data/Data_parallel**: contains the script **split_data_parallel.py** for generating test datasets for both the CuPy+mpi4py and the mpi4py-only implementations. Specify the matrix dimensions, the number of batches (num_batches), and the number of MPI ranks (num_ranks). The resulting partitioning mirrors the scheme shown in Figure 2.
 
 
 <p align="center">
@@ -104,11 +103,11 @@ $ python3 main_serial.py
 
 #### Running SVD with cupy+mpi4py(hybrid version)
 
-- For the Hybrid  version, if you are working in interactive mode, you can run the following command — for example, with 2 GPUs.
+- For the GPUs  version, if you are working in interactive mode, you can run the following command — for example, with 4 GPUs.
 
 
 ```bash
-$ mpirun -np 2 python3 main_parallel_gpu.py
+$ mpirun -np 4 python3 main_parallel_gpu.py
 ```
 Otherwise, you can run the code using the Slurm script job_gpus.sh: 
 
