@@ -1,105 +1,212 @@
 import numpy as np
 from mpi4py import MPI
+import os, sys
+# from utils import low_rank_svd, generate_right_vectors  # Assurez-vous d'importer ces fonctions
 
-# Import custom Python packages
-# import pyparsvd.postprocessing as post
-
-# For shared memory deployment:
-# `export OPENBLAS_NUM_THREADS=1`
+CWD = os.getcwd()
+from base_parallel import SVD_Base
 
 
-class SVD_Base(object):
-    """
-    SVD_Base class. It implements data and methods shared
-    across the derived classes(HLL_SVD, SVD_MPI, Dsvd).
 
-    :param int K: number of modes to truncate.
-    :param int ff: forget factor.
-    :param bool low_rank: if True, it uses a low rank algorithm to speed up computations.
-    
-    """
+class Dsvd(SVD_Base):
+    def __init__(self, K, ff, low_rank=False, results_dir='results'):
+        super().__init__(K, ff, low_rank, results_dir)
+  
 
-    def __init__(self, K, ff, low_rank=False):
-        self._K = K
-        self._ff = ff
-        self._low_rank = low_rank
-        self._Vt = None
+  
 
-        # Initialize MPI
-        self._comm = MPI.COMM_WORLD
-        self._rank = self.comm.Get_rank()
-        self._nprocs = self.comm.Get_size()
-
-    # --- Basic Getters ---
-
-    @property
-    def K(self):
-        """Get the number of modes to truncate."""
-        return self._K
-
-    @property
-    def ff(self):
-        """Get the forget factor."""
-        return self._ff
-
-    @property
-    def low_rank(self):
-        """Get the low rank behaviour."""
-        return self._low_rank
-
-    @property
-    def modes(self):
-        """Get the modes."""
-        if self.rank == 0:
-            if isinstance(self._modes, np.ndarray):
-                return self._modes
-            elif isinstance(self._modes, str):
-                return np.load(self._modes)
-            else:
-                raise TypeError("type,", type(self._modes), "not available")
-
-    @property
-    def singular_values(self):
-        """Get the singular values."""
-        if self.rank == 0:
-            if isinstance(self._singular_values, np.ndarray):
-                return self._singular_values
-            elif isinstance(self._singular_values, str):
-                return np.load(self._singular_values)
-            else:
-                raise TypeError("type,", type(self._singular_values), "not available")
-
-    @property
-    def iteration(self):
-        """Get the number of data incorporation performed in the streaming data ingestion."""
-        return self._iteration
-
-    @property
-    def n_modes(self):
-        """Get the number of modes."""
-        return self.singular_values.shape[-1]
-
-    @property
-    def comm(self):
-        """Get the parallel MPI Communicator."""
-        return self._comm
-
-    @property
-    def rank(self):
+    def tsqr1(self, A):
         """
-        Get the parallel MPI Rank
+        Tall-and-skinny QR decomposition followed by global reduction and optional low-rank SVD.
         """
-        return self._rank
-    @property
-    def Vt(self):
+        # �tape 1 : QR locale
+        q, r = np.linalg.qr(A)
+        rlocal_shape_0 = r.shape[0]
 
-        return self._Vt
+        # �tape 2 : rassemblement des R locaux
+        r_global = self.comm.gather(r, root=0)
 
-    @property
-    def nprocs(self):
-        """Get the number of processors."""
-        return self._nprocs
+        if self.rank == 0:
+            # Concat�nation de R
+            r_stack = np.concatenate(r_global, axis=0)
+            qglobal, rfinal = np.linalg.qr(r_stack)
+            qglobal = -qglobal  # Pour homog�n�it�
+            rfinal = -rfinal
 
-    # --- Plotting Methods ---
+            # Calcul de Qlocal pour le rang 0
+            qlocal = np.matmul(q, qglobal[:rlocal_shape_0])
 
-    
+            # Envoi des blocs de Qglobal aux autres rangs
+            for rank in range(1, self.nprocs):
+                start = rank * rlocal_shape_0
+                end = (rank + 1) * rlocal_shape_0
+                self.comm.send(qglobal[start:end], dest=rank, tag=rank + 10)
+
+            # �tape SVD (Levy-Lindenbaum)
+            if self._low_rank:
+                unew, snew, vt = low_rank_svd(rfinal, self._K)
+            else:
+                unew, snew, vt = np.linalg.svd(rfinal, full_matrices=False)
+        else:
+            qglobal = self.comm.recv(source=0, tag=self.rank + 10)
+            qlocal = np.matmul(q, qglobal)
+            unew = None
+            snew = None
+            vt = None
+
+        # Broadcast � tous les rangs
+        unew = self.comm.bcast(unew, root=0)
+        snew = self.comm.bcast(snew, root=0)
+        vt = self.comm.bcast(vt, root=0)
+
+        Ui = np.matmul(qlocal, unew)
+        return Ui, snew, vt
+
+ 
+
+    def tsqr1_svd(self, A):
+        """
+        Computing the SVD using the tsqr1 algorithm
+        """
+        Ui, S, V = self.tsqr1(A)
+        return Ui, S, V
+
+
+
+
+
+    def tsqr1_randomized(self, A, n_iter):
+        """
+        Perform parallel randomized  QR decomposition.
+
+        :param ndarray A: data matrix
+        :return: qlocal (local Q matrix), unew (updated U matrix), snew (singular values)
+        """
+        # Perform local QR
+        num_rows, num_cols = A.shape        
+        np.random.seed(42)      
+        omega = np.random.normal(size=(num_cols,self._K))
+      
+        Y = np.matmul(A, omega)
+        for _ in range(n_iter):
+            Y = np.matmul(A, np.matmul(A.T, Y))  # It�rations pour renforcer l'orthogonalisation
+
+        t4=MPI.Wtime()
+        q, r = np.linalg.qr(Y)
+        t5=MPI.Wtime()
+        rlocal_shape_0 = r.shape[0]
+        # Gather data at rank 0:
+        r_global = self.comm.gather(r, root=0)
+        # Perform QR at rank 0:
+        if self.rank == 0:
+            temp = r_global[0]
+            for i in range(self.nprocs-1):
+                temp = np.concatenate((temp, r_global[i+1]), axis=0)
+            r_global = temp
+
+            qglobal, rfinal = np.linalg.qr(r_global)
+            qglobal = -qglobal  # Trick for consistency
+            rfinal = -rfinal
+
+            # For this rank
+            qlocal = np.matmul(q, qglobal[:rlocal_shape_0])
+
+            # Send to other ranks
+            for rank in range(1, self.nprocs):
+                self.comm.send(qglobal[rank*rlocal_shape_0: (rank+1)*rlocal_shape_0], dest=rank, tag=rank+10)
+
+            # Perform SVD on rfinal
+            if self._low_rank:
+                unew, snew, vt = self.low_rank_svd(rfinal, self._K)  # Use self.low_rank_svd
+            else:
+                unew, snew, vt = np.linalg.svd(rfinal)  # Discard the third value (Vh)
+                unew=unew[:,:self._K]
+                snew=snew[:self._K]
+        else:
+            # Receive qglobal slices from rank 0
+            qglobal = self.comm.recv(source=0, tag=self.rank+10)
+
+            # For this rank
+            qlocal = np.matmul(q, qglobal)
+
+            # To receive new singular vectors
+            unew = None
+            snew = None
+            vt = None
+
+        unew = self.comm.bcast(unew, root=0)
+        snew = self.comm.bcast(snew, root=0)
+        vt = self.comm.bcast(vt, root=0)
+
+        Ui = np.matmul(qlocal, unew)
+        return Ui, snew, vt
+
+
+    def tsqr1_svd_randomized(self, A, n_iter):
+        """
+        Effectue la SVD via TSQR sur la matrice A locale.
+        """
+        Ui, S, V = self.tsqr1_randomized(A,n_iter)
+        return Ui, S, V
+
+
+
+
+    def APMOS(self, A):
+        """
+        SVD by APMOS.
+        """
+        vlocal, slocal = generate_right_vectors(A, self._K)
+        wlocal = np.matmul(vlocal, np.diag(slocal).T)
+        wglobal = self.comm.gather(wlocal, root=0)
+
+        if self.rank == 0:
+            temp = np.concatenate(wglobal, axis=-1)
+            if self._low_rank:
+                x, s, _ = low_rank_svd(temp, self._K)
+            else:
+                x, s, _ = np.linalg.svd(temp, full_matrices=False)
+        else:
+            x = None
+            s = None
+
+        x = self.comm.bcast(x, root=0)
+        s = self.comm.bcast(s, root=0)
+
+        phi_local = [1.0 / s[i] * np.matmul(A, x[:, i:i+1]) for i in range(self._K)]
+        temp = np.concatenate(phi_local, axis=-1)
+
+        return temp, s[:self._K]
+
+
+
+
+    def EVD(self, A):
+        """
+        SVD using the snapshot approach 
+        """
+        A = A.astype(np.float64)
+        local_rows, n = A.shape
+        local_ATA = np.dot(A.T, A).astype(np.float64)
+        ATA = np.zeros((n, n), dtype=np.float64)
+
+        self.comm.Allreduce(local_ATA, ATA, op=MPI.SUM)
+
+        if self.rank == 0:
+            eig_values, eig_vectors = np.linalg.eigh(ATA)
+            idx = np.argsort(eig_values)[::-1]
+            eig_values = eig_values[idx]
+            eig_vectors = eig_vectors[:, idx]
+            eig_values_truncated = eig_values[:self._K]
+            V_truncated = eig_vectors[:, :self._K]
+            singular_values_truncated = np.sqrt(eig_values_truncated)
+        else:
+            V_truncated = None
+            singular_values_truncated = None
+
+        V_truncated = self.comm.bcast(V_truncated, root=0)
+        singular_values_truncated = self.comm.bcast(singular_values_truncated, root=0)
+        U_local = np.dot(A, V_truncated) / singular_values_truncated
+
+        return U_local, singular_values_truncated, V_truncated
+
