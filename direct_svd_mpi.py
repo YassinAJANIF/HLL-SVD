@@ -209,3 +209,4 @@ class Dsvd(SVD_Base):
         U_local = np.dot(A, V_truncated) / singular_values_truncated
 
         return U_local, singular_values_truncated, V_truncated
+
