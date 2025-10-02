@@ -22,8 +22,7 @@ class Serial_SVD(SVD_Base):
     :param int K: number of modes to truncate.
     :param int ff: forget factor.
     :param bool low_rank: if True, it uses a low-rank algorithm to speed up computations.
-    :param str results_dir: if specified, it saves the results in `results_dir`. \
-        Default save path is under a folder called `results` in the current working directory.
+    
     """
 
     def __init__(self, K, ff, low_rank=False):
