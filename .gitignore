@@ -1,7 +1,7 @@
 # --- data & results (gros fichiers) ---
-data/
+data/*
 !data/.gitkeep
-results/
+results/*
 !results/.gitkeep
 
 # --- caches / build ---
