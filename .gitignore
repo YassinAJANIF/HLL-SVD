@@ -11,6 +11,18 @@ __pycache__/
 *.pyd
 .pytest_cache/
 
+
+
+data/*
+!data/.gitkeep
+!data/data_parallel/split_data_parallel.py
+
+
+
+
+
+
+
 # --- OS & éditeurs ---
 .DS_Store
 *~
