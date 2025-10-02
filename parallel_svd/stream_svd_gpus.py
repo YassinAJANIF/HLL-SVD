@@ -13,7 +13,7 @@ class HLL_SVD(SVD_Base):
         super().__init__(K, ff, low_rank)
 
         """
-        SVD_MPI parallel class.
+         HLL_SVD parallel class.
 
         :param int K: number of modes to truncate.
         :param int ff: forget factor.
