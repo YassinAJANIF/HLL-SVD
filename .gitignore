@@ -1,24 +1,20 @@
-# Fichiers Python compilés
+# === Ignore data and results (large files not tracked) ===
+data/
+results/
+
+# === Ignore temporary editor/OS files ===
+*.swp
+*.swo
+*.sw?
+*~
+.DS_Store
+
+# === Ignore Python cache ===
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.swp
-# Dossiers d’environnement virtuel
-env/
+
+# === Ignore virtual environments ===
 venv/
-
-# Données temporaires ou locales
-*.npy
-*.h5
-*.dat
-
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints/
-
-# Fichiers système
-.DS_Store
-Thumbs.db
-
-*.sw?
-.nfs*
+.env/
