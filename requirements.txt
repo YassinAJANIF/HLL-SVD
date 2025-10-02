@@ -1,0 +1,12 @@
+cupy>=12.0
+numpy>=1.22
+scipy
+mpi4py
+matplotlib
+h5py
+charset-normalizer
+cycler
+defusedxml
+filelock
+certifi
+pytest
