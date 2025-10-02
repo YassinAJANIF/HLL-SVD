@@ -1,20 +1,17 @@
-# === Ignore data and results (large files not tracked) ===
+# --- data & results (gros fichiers) ---
 data/
+!data/.gitkeep
 results/
+!results/.gitkeep
 
-# === Ignore temporary editor/OS files ===
-*.swp
-*.swo
-*.sw?
-*~
-.DS_Store
-
-# === Ignore Python cache ===
+# --- caches / build ---
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.pytest_cache/
 
-# === Ignore virtual environments ===
-venv/
-.env/
+# --- OS & éditeurs ---
+.DS_Store
+*~
+.*.sw?
