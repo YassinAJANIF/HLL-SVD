@@ -53,7 +53,7 @@ def batch_path(rank: int, i: int) -> str:
 
 def main():
     # Create the solver (exposes MPI rank through hll.rank)
-    hll = HLL_SVD(K=K, ff=FORGET_FF)
+    hll = HLL_SVD(K=K, ff=FORGET_FF, low_rank=False)
     rank = hll.rank
 
     # Ensure output directory exists (created by rank 0)
