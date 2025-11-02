@@ -34,7 +34,7 @@ except ImportError:
 DATA_DIR    = "data/data_parallel"  # expects files: points_rank_{rank}_batch_{i}.npy
 RESULTS_DIR = "results"
 K           = 10                    # target rank
-FORGET_FF   = 10                    # forget factor
+FORGET_FF   = 1.0                    # forget factor
 BATCH_IDS   = [0, 1, 2, 3, 4]       # batches to process (edit as needed)
 
 
