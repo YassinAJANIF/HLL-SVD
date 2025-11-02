@@ -14,7 +14,7 @@ import numpy as np
 # User parameters (edit here)
 # -----------------------------
 OUT_DIR      = Path(".")           # output directory (e.g., Path("data/data_parallel"))
-NUM_BATCHES  = 3                   # number of column batches
+NUM_BATCHES  = 5                   # number of column batches
 NUM_RANKS    =4                    # number of row chunks per batch
 N_ROWS       = 60_000_000
 N_COLS       = 100
