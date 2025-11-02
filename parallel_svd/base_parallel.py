@@ -24,6 +24,7 @@ class SVD_Base(object):
         self._ff = ff
         self._low_rank = low_rank
         self._Vt = None
+        self._iteration = 0
 
         # Initialize MPI
         self._comm = MPI.COMM_WORLD
