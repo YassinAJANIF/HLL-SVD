@@ -42,27 +42,27 @@ Our library provides a comprehensive set of methods for computing the Singular V
 # Installation
 Use the following commands to install the library locally<br>
 
-1) Clone the repo
+1. Clone the repo
 ```bash
 $ git clone https://github.com/YassinAJANIF/HLL-SVD.git
 $ cd  HLL-SVD
 ```
 
-2)Create & activate a Conda environment (recommended)
+2. Create & activate a Conda environment (recommended)
 
 ```bash
 conda create -n hll-svd python=3.11 -c conda-forge
 conda activate hll-svd
 ```
 
-3 (Optional, for parallel I/O) Install the HDF5 MPI-IO stack
+3. (Optional, for parallel I/O) Install the HDF5 MPI-IO stack
 Run this before installing the package:  
 ```bash
 conda install -c conda-forge "h5py>=3.9.*=mpi*" openmpi mpi4py
 ```
 This provides an MPI-enabled build of h5py, plus OpenMPI and mpi4py.
 
-4 Install the package
+4. Install the package
 
 - CPU-only (base dependencies come from requirements.txt):
 
