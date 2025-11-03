@@ -55,14 +55,14 @@ conda create -n hll-svd python=3.11 -c conda-forge
 conda activate hll-svd
 ```
 
-3) Optional, for parallel I/O) Install the HDF5 MPI-IO stack
+3 (Optional, for parallel I/O) Install the HDF5 MPI-IO stack
 Run this before installing the package:  
 ```bash
 conda install -c conda-forge "h5py>=3.9.*=mpi*" openmpi mpi4py
 ```
 This provides an MPI-enabled build of h5py, plus OpenMPI and mpi4py.
 
-4) Install the package
+4 Install the package
 
 - CPU-only (base dependencies come from requirements.txt):
 
@@ -103,6 +103,10 @@ $ python3 split_data_serial.py
 
 
 - **data/data_parallel**: contains the script **split_data_parallel.py** for generating test datasets for parallel implementations. Specify the matrix dimensions, the number of batches (num_batches), and the number of MPI ranks (num_ranks). Figure 2 illustrates the case with two batches and two MPI ranks.
+```bash
+$ python3 split_data_parallel.py
+```
+
 <p align="center">
   <img src="figs/parallel_division_data.png" alt="SVD Architecture" width="500"/>
    <br/>
