@@ -45,7 +45,7 @@ Use the following commands to install the library locally<br>
 1) Clone the repo
 ```bash
 $ git clone https://github.com/YassinAJANIF/HLL-SVD.git
-$ cd cd HLL-SVD
+$ cd  HLL-SVD
 ```
 
 2)Create & activate a Conda environment (recommended)
