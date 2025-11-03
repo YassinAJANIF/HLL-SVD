@@ -1,25 +1,21 @@
+# setup.py
 from setuptools import setup, find_packages
+from pathlib import Path
 
-# Charger les dépendances depuis un fichier requirements.txt
-def load_requirements(filename):
-    with open(filename) as f:
-        return f.read().splitlines()
+# Dépendances de base (sans CuPy)
+base_reqs = [
+    r.strip() for r in Path("requirements.txt").read_text().splitlines()
+    if r.strip() and not r.strip().startswith("#") and not r.lower().startswith("cupy")
+]
 
 setup(
-    name="nom_du_projet",
-    version="1.0.0",
-    author="Votre Nom",
-    author_email="votre_email@example.com",
-    description="Description de votre projet",
-    long_description=open("README.md").read(),
-    long_description_content_type="text/markdown",
-    url="https://github.com/YassinAJANIF/PyParSVD_GPU.git",
+    name="HLL-SVD",
     packages=find_packages(),
-    install_requires=load_requirements("requirements.txt"),  # Charge les dépendances
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ],
-    python_requires=">=3.6",  # Version minimale de Python
+    install_requires=base_reqs,           # pas de cupy ici
+    extras_require={
+        "gpu-cuda12x": ["cupy-cuda12x"],  # CUDA 12.x
+        "gpu-cuda11x": ["cupy-cuda11x"],  # CUDA 11.x
+    },
+    # ... (le reste inchangé)
 )
+
