@@ -1,4 +1,3 @@
-cupy>=12.0
 numpy>=1.22
 scipy
 mpi4py
