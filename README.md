@@ -38,27 +38,54 @@ Our library provides a comprehensive set of methods for computing the Singular V
 
 
 3. **Serial SVD**: The library provides a serial implementation of the Levy and Lindenbaum method.
+
 # Installation
-Use the following command to install the library locally<br>
+Use the following commands to install the library locally<br>
+
+1) Clone the repo
 ```bash
-$ git clone "https://github.com/YassinAJANIF/HLL-SVD.git"
-```
-**Requirement**:
-To run the library, you must have a Conda environment and libraries such as NumPy, CuPy, HDF5,mpi4py...., All requirement are in  the file "requirements.txt", to do so, please run the file:
-```bash
-python3 setup.py
+$ git clone https://github.com/YassinAJANIF/HLL-SVD.git
+$ cd cd HLL-SVD
 ```
 
-## Installation in a brand new environment
-In a new conda/mamba environment e.g. `par_svd` run the following command
+2)Create & activate a Conda environment (recommended)
 
 ```bash
-$ (par_svd) mamba install --file requirements.txt -y
-...
-Executing transaction: done
-$ (par_svd) pip install .
-Successfully installed nom_du_projet-1.0.0
+conda create -n hll-svd python=3.11 -c conda-forge
+conda activate hll-svd
 ```
+
+3) Optional, for parallel I/O) Install the HDF5 MPI-IO stack
+Run this before installing the package:  
+```bash
+conda install -c conda-forge "h5py>=3.9.*=mpi*" openmpi mpi4py
+```
+This provides an MPI-enabled build of h5py, plus OpenMPI and mpi4py.
+
+4) Install the package
+
+- CPU-only (base dependencies come from requirements.txt):
+
+```bash
+pip install -e .
+```
+
+- GPU (CuPy) — choose the extra matching your CUDA:
+
+
+```bash
+# CUDA 12.x
+pip install -e '.[gpu-cuda12x]'
+```
+
+
+```bash
+# CUDA 11.x
+pip install -e '.[gpu-cuda11x]'
+```
+
+
+
 # Testing installation
 ### Generating test data
 To generate the data, there are two directories:
