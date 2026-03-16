@@ -155,7 +155,5 @@ $ SBATCH  job_gpus.sh
 #### (Benson et al 2013)
 *Direct QR factorizations for tall-and-skinny matrices in MapReduce architectures.* [[DOI](https://ieeexplore.ieee.org/document/6691583)]
 
-#Lien utils
- 
 
 
